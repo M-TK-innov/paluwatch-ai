@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaluWatch AI — Présentation</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11,11,11,.10);
+    --accent: #2a78d6; --accent-2: #eb6834;
+    --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19;
+      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255,255,255,.10);
+      --accent: #3987e5; --accent-2: #d95926;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+  .deck { height: 100%; position: relative; }
+  section.slide {
+    position: absolute; inset: 0; display: none;
+    padding: 6vh 8vw; overflow-y: auto;
+    flex-direction: column; justify-content: center;
+  }
+  section.slide.active { display: flex; }
+  .kicker {
+    font-size: 13px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+  }
+  h1 { font-size: clamp(30px, 5.5vw, 58px); margin: 0 0 12px; line-height: 1.08; }
+  h2 { font-size: clamp(24px, 3.6vw, 38px); margin: 0 0 18px; line-height: 1.15; }
+  p.lead { font-size: clamp(16px, 1.7vw, 21px); color: var(--ink-2); max-width: 34em; margin: 0 0 8px; }
+  .slogan { font-style: italic; color: var(--ink-2); font-size: clamp(15px, 1.6vw, 20px); }
+  ul.big { font-size: clamp(15px, 1.5vw, 19px); color: var(--ink-2); line-height: 1.7; padding-left: 1.2em; max-width: 36em; }
+  ul.big li { margin-bottom: 6px; }
+  ul.big strong, .cards strong { color: var(--ink); }
+  .cards { display: grid; gap: 14px; margin-top: 18px; }
+  .cards.c2 { grid-template-columns: repeat(2, 1fr); }
+  .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+  .cards.c4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 800px) { .cards.c3, .cards.c4 { grid-template-columns: repeat(2, 1fr); } .cards.c2 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px;
+  }
+  .card .icon { font-size: 26px; margin-bottom: 8px; }
+  .card h3 { margin: 0 0 6px; font-size: clamp(14px, 1.4vw, 17px); }
+  .card p { margin: 0; font-size: clamp(12.5px, 1.2vw, 14.5px); color: var(--ink-2); line-height: 1.5; }
+  .stat { text-align: center; }
+  .stat .n { font-size: clamp(30px, 4vw, 48px); font-weight: 700; color: var(--accent); }
+  .stat .l { font-size: clamp(12px, 1.2vw, 14px); color: var(--ink-2); margin-top: 4px; }
+  .flow { display: flex; align-items: stretch; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .flow .step { flex: 1 1 150px; }
+  .flow .arrow { align-self: center; color: var(--muted); font-size: 22px; }
+  blockquote.sms {
+    margin: 14px 0 0; padding: 14px 18px; max-width: 30em;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 4px solid var(--accent-2); border-radius: 0 12px 12px 0;
+    font-size: clamp(13.5px, 1.4vw, 16px); color: var(--ink-2);
+  }
+  blockquote.sms .from { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 5px; }
+  table { border-collapse: collapse; margin-top: 16px; font-size: clamp(12.5px, 1.25vw, 15px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  th, td { padding: 9px 16px; text-align: left; border-bottom: 1px solid var(--grid); color: var(--ink-2); }
+  th { color: var(--muted); font-size: .85em; text-transform: uppercase; letter-spacing: .06em; }
+  tr:last-child td { border-bottom: none; }
+  td strong { color: var(--ink); }
+  .risk-dots { display: flex; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+  .risk-dots span { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--ink-2); }
+  .risk-dots i { width: 13px; height: 13px; border-radius: 50%; }
+  .titlebox { text-align: center; align-items: center; display: flex; flex-direction: column; }
+  .logo-big {
+    width: 74px; height: 74px; border-radius: 20px; background: var(--accent);
+    color: #fff; font-size: 38px; display: flex; align-items: center;
+    justify-content: center; margin-bottom: 26px;
+  }
+  .nav {
+    position: fixed; bottom: 18px; right: 22px; display: flex; gap: 8px;
+    align-items: center; z-index: 10;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 7px 12px; border-radius: 999px; font-size: 13px; color: var(--muted);
+  }
+  .nav button {
+    font: inherit; cursor: pointer; background: var(--page);
+    color: var(--ink); width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+  .nav button:hover { background: var(--accent); color: #fff; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); z-index: 10; transition: width .25s; }
+  .helper { position: fixed; bottom: 22px; left: 22px; font-size: 12px; color: var(--muted); }
+  @media print {
+    body { overflow: visible; background: #fff; }
+    .deck { height: auto; }
+    section.slide { position: static; display: flex !important; min-height: 100vh; page-break-after: always; }
+    .nav, .progress, .helper { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- 1. Titre -->
+<section class="slide titlebox">
+  <div class="logo-big">🦟</div>
+  <div class="kicker">Santé publique × Intelligence artificielle</div>
+  <h1>PaluWatch AI</h1>
+  <p class="lead" style="max-width:38em">Système intelligent de prédiction, surveillance et réponse précoce contre le paludisme en Afrique</p>
+  <p class="slogan">« Anticiper le paludisme pour sauver des vies. »</p>
+</section>
+
+<!-- 2. Problème -->
+<section class="slide">
+  <div class="kicker">Le problème</div>
+  <h2>On soigne après l'épidémie,<br>au lieu d'agir avant</h2>
+  <div class="cards c3">
+    <div class="card stat"><div class="n">&gt; 90 %</div><div class="l">des cas mondiaux de paludisme sont en Afrique (OMS)</div></div>
+    <div class="card stat"><div class="n">&lt; 5 ans</div><div class="l">les enfants et les femmes enceintes sont les plus touchés</div></div>
+    <div class="card stat"><div class="n">Trop tard</div><div class="l">les interventions arrivent après l'apparition des foyers</div></div>
+  </div>
+  <ul class="big" style="margin-top:22px">
+    <li>Campagnes de lutte <strong>réactives</strong>, ressources <strong>limitées</strong></li>
+    <li>Données <strong>dispersées</strong>, zones rurales <strong>mal surveillées</strong></li>
+    <li>Aucun système ne prédit les zones à risque <strong>avant</strong> la flambée</li>
+  </ul>
+</section>
+
+<!-- 3. Solution -->
+<section class="slide">
+  <div class="kicker">La solution</div>
+  <h2>Une plateforme IA qui voit venir les flambées</h2>
+  <div class="cards c4">
+    <div class="card"><div class="icon">🔮</div><h3>Prédire</h3><p>Les flambées de paludisme plusieurs semaines à l'avance</p></div>
+    <div class="card"><div class="icon">🗺️</div><h3>Cartographier</h3><p>Les zones à risque sur une carte nationale interactive</p></div>
+    <div class="card"><div class="icon">📡</div><h3>Surveiller</h3><p>L'évolution en temps réel grâce aux capteurs et signalements</p></div>
+    <div class="card"><div class="icon">🚑</div><h3>Guider</h3><p>Les interventions ciblées des autorités sanitaires</p></div>
+  </div>
+</section>
+
+<!-- 4. Comment ça marche -->
+<section class="slide">
+  <div class="kicker">Architecture</div>
+  <h2>Des données brutes à l'action de terrain</h2>
+  <div class="flow">
+    <div class="card step"><div class="icon">🛰️</div><h3>1. Collecter</h3><p>Météo, satellites, capteurs IoT, cas déclarés, signalements SMS/USSD</p></div>
+    <div class="arrow">→</div>
+    <div class="card step"><div class="icon">🧠</div><h3>2. Prédire</h3><p>Modèles ML (Random Forest, XGBoost, LSTM, Prophet) + vision par ordinateur</p></div>
+    <div class="arrow">→</div>
+    <div class="card step"><div class="icon">🚨</div><h3>3. Alerter</h3><p>Notifications automatiques : population, agents de santé, ministère</p></div>
+    <div class="arrow">→</div>
+    <div class="card step"><div class="icon">🎯</div><h3>4. Agir</h3><p>Moustiquaires, médicaments, tests et équipes envoyés au bon endroit</p></div>
+  </div>
+</section>
+
+<!-- 5. Données -->
+<section class="slide">
+  <div class="kicker">Couche données</div>
+  <h2>Quatre sources croisées en continu</h2>
+  <div class="cards c2">
+    <div class="card"><div class="icon">🌦️</div><h3>Météorologiques</h3><p>Température, humidité, précipitations, vent — satellites, stations météo, API climatiques</p></div>
+    <div class="card"><div class="icon">🌍</div><h3>Environnementales</h3><p>Eaux stagnantes, zones inondables, végétation, occupation du sol</p></div>
+    <div class="card"><div class="icon">🏥</div><h3>Sanitaires</h3><p>Cas déclarés, admissions hospitalières, décès, résultats de tests</p></div>
+    <div class="card"><div class="icon">📱</div><h3>Communautaires</h3><p>Signalements SMS, USSD et application mobile — « 20 cas de fièvre observés dans le village »</p></div>
+  </div>
+</section>
+
+<!-- 6. IA -->
+<section class="slide">
+  <div class="kicker">Le cœur du système</div>
+  <h2>Trois familles de modèles d'IA</h2>
+  <div class="cards c3">
+    <div class="card"><div class="icon">📈</div><h3>Machine Learning</h3><p>Nombre de cas futurs, zones à risque, vitesse de propagation — Random Forest, XGBoost, LSTM, Prophet</p></div>
+    <div class="card"><div class="icon">👁️</div><h3>Vision par ordinateur</h3><p>Détection sur images satellites : mares, inondations, zones de reproduction des moustiques</p></div>
+    <div class="card"><div class="icon">💬</div><h3>IA générative</h3><p>Assistant conversationnel de santé publique : « Quels districts risquent une flambée dans 30 jours ? »</p></div>
+  </div>
+</section>
+
+<!-- 7. IoT + cartographie -->
+<section class="slide">
+  <div class="kicker">Terrain</div>
+  <h2>Des capteurs solaires aux cartes de risque</h2>
+  <div class="cards c2">
+    <div class="card"><div class="icon">🔋</div><h3>Micro-capteurs IoT solaires</h3><p>Humidité, température, pluviométrie dans les villages. Transmission LoRaWAN, GSM ou satellite — même sans couverture internet.</p></div>
+    <div class="card"><div class="icon">🗺️</div><h3>Cartographie intelligente</h3><p>Chaque commune est colorée selon son niveau de risque prédit. Les autorités voient immédiatement où intervenir en priorité.</p></div>
+  </div>
+  <div class="risk-dots">
+    <span><i style="background:var(--good)"></i> Faible</span>
+    <span><i style="background:var(--warn)"></i> Modéré</span>
+    <span><i style="background:var(--serious)"></i> Élevé</span>
+    <span><i style="background:var(--critical)"></i> Critique</span>
+  </div>
+</section>
+
+<!-- 8. Application mobile -->
+<section class="slide">
+  <div class="kicker">Application mobile</div>
+  <h2>Un outil pour chaque acteur</h2>
+  <div class="cards c3">
+    <div class="card"><div class="icon">🧍</div><h3>Citoyens</h3><p>Déclaration de symptômes, conseils de prévention, alertes météo-santé, centre de santé le plus proche</p></div>
+    <div class="card"><div class="icon">🩺</div><h3>Agents de santé</h3><p>Saisie des cas, suivi communautaire, alertes IA — fonctionne aussi via USSD sans smartphone</p></div>
+    <div class="card"><div class="icon">🏛️</div><h3>Décideurs</h3><p>Tableaux de bord, statistiques, cartographie nationale en temps réel</p></div>
+  </div>
+</section>
+
+<!-- 9. Alerte précoce -->
+<section class="slide">
+  <div class="kicker">Alerte précoce</div>
+  <h2>L'information arrive avant l'épidémie</h2>
+  <blockquote class="sms">
+    <div class="from">📲 SMS — population &amp; agents communautaires</div>
+    « Risque élevé de paludisme dans la commune de Kandi durant les 15 prochains jours. Dormez sous moustiquaire imprégnée. »
+  </blockquote>
+  <blockquote class="sms" style="border-left-color:var(--critical)">
+    <div class="from">🏛️ Notification — Ministère de la Santé</div>
+    « Niveau d'alerte : Orange — Probabilité d'épidémie : 78 % — Département : Atacora. Recommandation : pré-positionner moustiquaires et antipaludiques. »
+  </blockquote>
+</section>
+
+<!-- 10. Cas d'usage -->
+<section class="slide">
+  <div class="kicker">Cas d'usage — Bénin</div>
+  <h2>Atacora : l'épidémie évitée</h2>
+  <ul class="big">
+    <li>🌧️ La saison des pluies commence — <strong>forte humidité, pluies abondantes</strong>, hausse des cas dans les villages voisins</li>
+    <li>🔮 L'IA prévoit une <strong>flambée dans 3 semaines</strong> (probabilité 78 %)</li>
+    <li>🎯 Actions déclenchées : distribution de <strong>moustiquaires</strong>, campagnes de <strong>sensibilisation</strong>, renforcement des <strong>stocks d'antipaludiques</strong>, déploiement d'<strong>agents communautaires</strong></li>
+    <li>✅ Résultat : <strong>l'épidémie est évitée</strong></li>
+  </ul>
+</section>
+
+<!-- 11. Jumeau numérique -->
+<section class="slide">
+  <div class="kicker">Innovation majeure</div>
+  <h2>Le jumeau numérique sanitaire</h2>
+  <p class="lead">Chaque district possède une copie virtuelle dynamique. Les décideurs testent leurs scénarios <strong style="color:var(--ink)">avant</strong> d'engager les ressources.</p>
+  <div class="cards c3">
+    <div class="card"><div class="icon">🌧️</div><h3>Simuler les pluies</h3><p>Que se passe-t-il si la saison des pluies dure 3 semaines de plus ?</p></div>
+    <div class="card"><div class="icon">🦟</div><h3>Simuler la propagation</h3><p>Comment les moustiques colonisent-ils les zones inondées ?</p></div>
+    <div class="card"><div class="icon">⚖️</div><h3>Comparer les interventions</h3><p>Moustiquaires ou pulvérisation : quel impact pour quel coût ?</p></div>
+  </div>
+</section>
+
+<!-- 12. Technologies -->
+<section class="slide">
+  <div class="kicker">Stack technique</div>
+  <h2>Des technologies éprouvées</h2>
+  <table>
+    <tr><th>Domaine</th><th>Technologies</th></tr>
+    <tr><td><strong>Backend</strong></td><td>Django, FastAPI</td></tr>
+    <tr><td><strong>Base de données</strong></td><td>PostgreSQL + PostGIS (géospatial)</td></tr>
+    <tr><td><strong>IA</strong></td><td>TensorFlow, PyTorch, Scikit-Learn</td></tr>
+    <tr><td><strong>SIG</strong></td><td>QGIS, GeoServer</td></tr>
+    <tr><td><strong>Mobile</strong></td><td>Flutter (Android/iOS), USSD</td></tr>
+    <tr><td><strong>IoT</strong></td><td>ESP32, LoRa</td></tr>
+    <tr><td><strong>Cloud</strong></td><td>AWS, Azure, OVHcloud</td></tr>
+  </table>
+</section>
+
+<!-- 13. Impact -->
+<section class="slide">
+  <div class="kicker">Impact attendu</div>
+  <h2>Des vies sauvées, des ressources optimisées</h2>
+  <div class="cards c3">
+    <div class="card"><div class="icon">❤️</div><h3>Sanitaire</h3><p>Réduction des cas, de la mortalité infantile et des hospitalisations</p></div>
+    <div class="card"><div class="icon">💰</div><h3>Économique</h3><p>Réduction des coûts de traitement, meilleure allocation des ressources</p></div>
+    <div class="card"><div class="icon">🤝</div><h3>Social</h3><p>Protection des populations vulnérables, résilience communautaire renforcée</p></div>
+  </div>
+  <div class="cards c3" style="margin-top:14px">
+    <div class="card stat"><div class="n">≥ 80 %</div><div class="l">de rappel des flambées à 3 semaines (cible pilote)</div></div>
+    <div class="card stat"><div class="n">&lt; 24 h</div><div class="l">entre détection du risque et alerte aux autorités</div></div>
+    <div class="card stat"><div class="n">−25 %</div><div class="l">d'incidence visée dans les zones pilotes</div></div>
+  </div>
+</section>
+
+<!-- 14. Feuille de route -->
+<section class="slide">
+  <div class="kicker">Feuille de route &amp; budget</div>
+  <h2>Du pilote Atacora à l'échelle régionale</h2>
+  <table>
+    <tr><th>Phase</th><th>Période</th><th>Contenu</th></tr>
+    <tr><td><strong>0 — Préparation</strong></td><td>M1–M3</td><td>Faisabilité, conventions de données, conception</td></tr>
+    <tr><td><strong>1 — Pilote</strong></td><td>M4–M12</td><td>Atacora + Alibori : 150 capteurs, modèles v1, alertes SMS</td></tr>
+    <tr><td><strong>2 — National</strong></td><td>M13–M24</td><td>12 départements, app grand public, jumeau numérique</td></tr>
+    <tr><td><strong>3 — Régional</strong></td><td>M25–M36</td><td>Togo, Burkina Faso, Niger — tableau de bord CEDEAO</td></tr>
+  </table>
+  <p class="lead" style="margin-top:16px">Budget pilote (24 mois) : <strong style="color:var(--ink)">352 M FCFA ≈ 537 000 €</strong></p>
+</section>
+
+<!-- 15. Conclusion -->
+<section class="slide titlebox">
+  <div class="logo-big">🦟</div>
+  <h2>Passer du « soigner après »<br>au « prévenir avant »</h2>
+  <p class="lead" style="max-width:36em">PaluWatch AI donne aux autorités sanitaires trois semaines d'avance sur les épidémies — au Bénin d'abord, puis dans toute la région.</p>
+  <p class="slogan">« Anticiper le paludisme pour sauver des vies. »</p>
+</section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Diapositive précédente">‹</button>
+  <span id="counter">1 / 15</span>
+  <button id="next" aria-label="Diapositive suivante">›</button>
+</div>
+<div class="helper">← → pour naviguer · Ctrl+P pour exporter en PDF</div>
+
+<script>
+  const slides = [...document.querySelectorAll("section.slide")];
+  let i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle("active", k === i));
+    document.getElementById("counter").textContent = (i + 1) + " / " + slides.length;
+    document.getElementById("progress").style.width = ((i + 1) / slides.length * 100) + "%";
+    location.hash = i + 1;
+  }
+  document.getElementById("prev").onclick = () => show(i - 1);
+  document.getElementById("next").onclick = () => show(i + 1);
+  addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") show(i + 1);
+    if (e.key === "ArrowLeft" || e.key === "PageUp") show(i - 1);
+    if (e.key === "Home") show(0);
+    if (e.key === "End") show(slides.length - 1);
+  });
+  show(parseInt(location.hash.slice(1) || "1", 10) - 1);
+</script>
+</body>
+</html>
