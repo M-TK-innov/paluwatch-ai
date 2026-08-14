@@ -164,6 +164,21 @@ a {
   color: #fff;
 }
 
+.btn-vert {
+  background: var(--vert);
+  color: #fff;
+}
+
+.section-presentation {
+  text-align: center;
+  margin: 34px 0 10px;
+}
+
+.section-presentation p {
+  color: #5c6b60;
+  margin-bottom: 14px;
+}
+
 .badge-proto {
   display: inline-block;
   background: rgba(255, 255, 255, 0.16);
