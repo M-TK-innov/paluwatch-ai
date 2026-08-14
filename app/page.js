@@ -130,6 +130,22 @@ export default function Accueil() {
           </p>
         </div>
       </div>
+
+      <section className="section-presentation">
+        <h2 className="section-titre">Découvrir le projet en détail</h2>
+        <p>
+          Parcourez la présentation complète du projet : contexte, solution,
+          architecture, feuille de route et impact attendu.
+        </p>
+        <a
+          href="/presentation.html"
+          className="btn btn-vert"
+          target="_blank"
+          rel="noopener"
+        >
+          📽️ Voir la présentation
+        </a>
+      </section>
     </>
   );
 }
