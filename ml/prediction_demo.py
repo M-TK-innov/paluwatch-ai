@@ -28,7 +28,6 @@ try:
     import pandas as pd
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.metrics import mean_absolute_error, r2_score
-    from sklearn.model_selection import train_test_split
 except ImportError:
     sys.exit(
         "Dépendances manquantes. Installez-les avec :\n"
@@ -128,14 +127,31 @@ def main() -> None:
     print(f"\nDataset : {len(dataset)} observations, {len(features)} variables, "
           f"{len(DISTRICTS)} districts, horizon S+{HORIZON_SEMAINES}")
 
-    # 2. Entraînement / évaluation
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # 2. Entraînement / évaluation en validation TEMPORELLE : les 20 % de
+    # semaines les plus récentes servent de test, afin de ne jamais prédire
+    # le passé à partir du futur (une partition aléatoire surestimerait les
+    # performances sur des séries autocorrélées).
+    coupure = dataset["semaine"].quantile(0.8)
+    train = dataset[dataset["semaine"] < coupure]
+    test = dataset[dataset["semaine"] >= coupure]
+    X_train, y_train = train[features], train["cible_cas_100k"]
+    X_test, y_test = test[features], test["cible_cas_100k"]
+    print(f"Validation temporelle : {len(train)} obs. d'entraînement "
+          f"(semaines < {int(coupure)}), {len(test)} obs. de test")
+
     modele = RandomForestRegressor(n_estimators=200, min_samples_leaf=3, random_state=42, n_jobs=-1)
     modele.fit(X_train, y_train)
     pred = modele.predict(X_test)
-    print(f"MAE  : {mean_absolute_error(y_test, pred):6.1f} cas/100k "
-          f"(erreur moyenne de prédiction)")
-    print(f"R²   : {r2_score(y_test, pred):6.3f}")
+
+    # Baseline de persistance : l'incidence à S+HORIZON est supposée égale
+    # à l'incidence courante (modèle naïf de référence).
+    pred_naif = test["cas_100k"]
+
+    print(f"\n{'Modèle':<28} {'MAE (cas/100k)':>15} {'R²':>8}")
+    print(f"{'Forêt aléatoire':<28} {mean_absolute_error(y_test, pred):>15.1f} "
+          f"{r2_score(y_test, pred):>8.3f}")
+    print(f"{'Persistance (naïf)':<28} {mean_absolute_error(y_test, pred_naif):>15.1f} "
+          f"{r2_score(y_test, pred_naif):>8.3f}")
 
     # 3. Importance des variables — quels signaux pilotent la prédiction ?
     importances = (
